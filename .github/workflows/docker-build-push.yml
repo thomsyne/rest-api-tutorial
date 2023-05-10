@@ -1,0 +1,53 @@
+name: Docker Build and Push
+
+on:
+  push:
+    branches:
+      - app-containerization
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    - name: Set up Docker
+      run: |
+        sudo systemctl start docker
+        sudo docker --version
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }} .
+        docker tag ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }}
+        docker push ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Update Lambda function with latest ECR image
+      run: |
+        aws lambda update-function-code \
+          --function-name hardsider-api-lambda \
+          --image-uri ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
