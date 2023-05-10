@@ -3,7 +3,7 @@ name: Docker Build and Push
 on:
   push:
     branches:
-      - app-containerization
+      - master
 
 jobs:
   build_and_push:
