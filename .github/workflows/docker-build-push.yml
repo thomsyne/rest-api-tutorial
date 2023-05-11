@@ -31,13 +31,13 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }} .
-        docker tag ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
+        docker build -t ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:${{ github.sha }} .
+        docker tag ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:latest
 
     - name: Push Docker image
       run: |
-        docker push ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:${{ github.sha }}
-        docker push ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
+        docker push ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:${{ github.sha }}
+        docker push ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:latest
 
     - name: Set up AWS CLI
       uses: aws-actions/configure-aws-credentials@v1
@@ -50,4 +50,4 @@ jobs:
       run: |
         aws lambda update-function-code \
           --function-name hardsider-api-lambda \
-          --image-uri ${{ steps.login-ecr.outputs.registry }}/hardsider-ecr-repo:latest
+          --image-uri ${{ steps.login-ecr.outputs.registry }}/backend-ecr-repo:latest
